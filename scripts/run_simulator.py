@@ -1,137 +1,132 @@
 #!/usr/bin/env python3
 """
-van Lent kinetic-simulator selection driver -- reconstructs round-07's
-selection payoff (Fig 6A/6B): does a bounded-complexity sparse-basis SR law
-(fit on log(flux), the true multiplicative kinetic scale) SELECT better
-designs than a tuned RandomForest ceiling, over the full 279,936-design
-ground truth?
+van Lent kinetic-simulator driver -- reconstructs Fig 6A (compressibility vs
+training size N) and Fig 6B (selection payoff: does the interpretable law
+out-select a tuned black-box ceiling?) from round-04/round-07.
 
-Ports round-04's audited LOG-FLUX OMP engine (cdl.sim_engine, verbatim port
-of research-loop round-04-t1/work/analysis.py) and drives it over a grid of
-training sizes N x seeds, exactly as round-07's selection-regime sweep did.
-Fitting the law on RAW flux (instead of log(flux)) does NOT reproduce this
-result -- the true law flux ~ EA*EC/EG is linear in log-space, so the OMP
-sparse-basis fit must operate on the log target.
+Ports round-04's audited LOG-FLUX OMP engine (cdl.sim_engine, a near-verbatim
+port of research-loop round-04-t1/work/analysis.py) and drives it two ways:
+
+  Fig 6A (sim_Ncurve.csv): a SINGLE deterministic trajectory across
+    N in {50,100,200,500,1000} using one fixed-seed rng that advances across
+    the N loop -- exactly round-04 main()'s N-curve construction. One
+    eval_N() call per N; DETERMINISTIC (reproduces the golden closely).
+
+  Fig 6B (selection_regime.csv): an N x seed grid (seed in range(--seeds)).
+    Each (N, seed) draws a fresh N-design training set (seed unique to that
+    cell), fits the law + black-box ceiling, and ranks the FULL 279,936-design
+    space to record the single-pick top-1 regret and top-100 overlap for both
+    models. round-07's exact driver was never persisted, so this is a
+    reconstruction -- exact per-cell values are not expected to match, but the
+    aggregate payoff direction (law_ov >> bb_ov, especially at N>=100) is the
+    paper's Fig 6B claim.
+
+The law is fit to log(flux) (the multiplicative kinetic scale); predictions
+back-transform via exp(clip(...)); r2_det is always scored on the flux scale.
 
 Run:  /usr/bin/python3 scripts/run_simulator.py --seeds 20
 """
 from __future__ import annotations
-import os, json, warnings, argparse, time
+import os
+import time
+import warnings
+import argparse
+
 import numpy as np
 import pandas as pd
+from numpy.random import default_rng
 
-from cdl.simulator import load_simulator, DEFAULT_PATH
-from cdl.sim_engine import (
-    r2_det, fit_omp_pareto, omp_predict_log, fit_rf_tuned, selection_metrics,
-    MAX_TERMS,
-)
+from cdl.simulator import load_simulator
+from cdl.sim_engine import eval_N, SEED, NS
 
 warnings.filterwarnings("ignore")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 RESULTS = os.path.join(ROOT, "results")
-os.makedirs(RESULTS, exist_ok=True)
 
-NS = [50, 100, 200, 500, 1000]
-N_TEST = 4000          # disjoint held-out test rows for r2_law / r2_bb
+NCURVE_COLS = [
+    "N", "r2_law", "r2_blackbox", "lambda_ratio",
+    "top1_regret_law", "top1_regret_law_pick", "best_in_plateau_regret_law",
+    "n_tied_best_law", "top100_overlap_law",
+    "top1_regret_blackbox", "top1_regret_blackbox_pick", "n_tied_best_blackbox",
+    "top100_overlap_blackbox", "Lbudget", "bb_rank_universe",
+]
+SEL_COLS = ["N", "seed", "law_top1", "bb_top1", "law_ov", "bb_ov"]
 
 
-def eval_draw(N, seed, X, flux, logflux, true_best, true_top100_set):
-    """One (N, seed) training-subset draw: fit law (log-flux OMP) + bb (tuned
-    RF on raw flux), score held-out R2_det, and rank the FULL 279,936-design
-    space for selection (top-100 overlap, top-1 regret)."""
+def load_data(data_dir):
+    path = os.path.join(data_dir, "vanlent-simulator.csv")
+    X, flux, names = load_simulator(path)
+    logflux = np.log(flux)
     n_total = X.shape[0]
-    rng = np.random.RandomState(seed)
-    tr_idx = rng.choice(n_total, N, replace=False)
-    mask = np.ones(n_total, dtype=bool)
-    mask[tr_idx] = False
-    remaining = np.flatnonzero(mask)
-    te_idx = rng.choice(remaining, size=min(N_TEST, remaining.size), replace=False)
+    true_best = float(flux.max())
+    true_top100_set = set(np.argpartition(-flux, 100)[:100].tolist())
+    return X, flux, logflux, true_best, true_top100_set, n_total
 
-    Xtr, Xte = X[tr_idx], X[te_idx]
-    ytr_log = logflux[tr_idx]
-    ytr_flux = flux[tr_idx]
-    yte_flux = flux[te_idx]
 
-    # ---- law: sparse-basis OMP fit on log(flux) ----
-    models, maxL = fit_omp_pareto(Xtr, ytr_log, max_terms=MAX_TERMS)
-    law_model = models[maxL]
-    yp_log_te = omp_predict_log(law_model, Xte)
-    yp_flux_te = np.exp(np.clip(yp_log_te, -50, 50))
-    r2_law = r2_det(yte_flux, yp_flux_te)
+def run_ncurve(X, flux, logflux, true_best, true_top100_set):
+    """Fig 6A: single deterministic trajectory across N (fixed SEED). One rng
+    is created once and advances across the NS loop -- this matches round-04
+    main()'s N-curve construction exactly (NOT a fresh rng per N)."""
+    rng = default_rng(SEED)
+    rows = []
+    for N in NS:
+        res = eval_N(N, X, flux, logflux, true_best, true_top100_set, rng)
+        rows.append({k: res[k] for k in NCURVE_COLS})
+        print(f"[Ncurve N={N:4d}] r2_law={res['r2_law']:.3f} r2_bb={res['r2_blackbox']:.3f} "
+              f"lam={res['lambda_ratio']:.3f} top100_ov_law={res['top100_overlap_law']} "
+              f"top100_ov_bb={res['top100_overlap_blackbox']} Lbudget={res['Lbudget']}",
+              flush=True)
+    return pd.DataFrame(rows, columns=NCURVE_COLS)
 
-    # ---- bb: tuned RandomForest fit directly on raw flux ----
-    rf, _ = fit_rf_tuned(Xtr, ytr_flux)
-    yte_bb_flux = rf.predict(Xte)
-    r2_bb = r2_det(yte_flux, yte_bb_flux)
 
-    # ---- selection over the FULL ground-truth space (exact) ----
-    law_pred_full = omp_predict_log(law_model, X)     # log scale; monotone -> ranking valid
-    bb_pred_full = rf.predict(X)                        # raw flux scale
-
-    law_sel = selection_metrics(law_pred_full, flux, true_best, true_top100_set,
-                                tie_rng=np.random.default_rng(seed))
-    bb_sel = selection_metrics(bb_pred_full, flux, true_best, true_top100_set,
-                               tie_rng=np.random.default_rng(seed))
-
-    return dict(
-        N=int(N), seed=int(seed),
-        law_top1=float(law_sel["pick_top1_regret"]),
-        bb_top1=float(bb_sel["pick_top1_regret"]),
-        law_ov=int(law_sel["top100_overlap"]),
-        bb_ov=int(bb_sel["top100_overlap"]),
-        r2_law=float(r2_law), r2_bb=float(r2_bb),
-    )
+def run_selection_regime(X, flux, logflux, true_best, true_top100_set, n_seeds):
+    """Fig 6B: N x seed grid. Each (N, seed) draws N training designs with a
+    seed unique to that cell (independent of loop order), fits law + bb via
+    eval_N, and records the selection payoff: single-pick top-1 regret and
+    top-100 overlap over the full ground-truth space, for both models."""
+    rows = []
+    for N in NS:
+        t0 = time.time()
+        for seed in range(n_seeds):
+            rng = default_rng((int(seed), int(N)))
+            res = eval_N(N, X, flux, logflux, true_best, true_top100_set, rng)
+            rows.append(dict(
+                N=int(N), seed=int(seed),
+                law_top1=float(res["top1_regret_law_pick"]),
+                bb_top1=float(res["top1_regret_blackbox_pick"]),
+                law_ov=int(res["top100_overlap_law"]),
+                bb_ov=int(res["top100_overlap_blackbox"]),
+            ))
+        print(f"[selection N={N:4d}] done ({n_seeds} seeds) t={time.time() - t0:.0f}s",
+              flush=True)
+    return pd.DataFrame(rows, columns=SEL_COLS)
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--seeds", type=int, default=20)
-    ap.add_argument("--data", default=DEFAULT_PATH)
+    ap.add_argument("--data-dir", default=os.path.join(ROOT, "data", "cleaned"),
+                     help="directory containing vanlent-simulator.csv")
+    ap.add_argument("--seeds", type=int, default=20,
+                     help="seeds per N for the Fig 6B selection-payoff grid")
     args = ap.parse_args()
 
-    X, flux, names = load_simulator(args.data)
-    n_total = X.shape[0]
-    true_best = float(flux.max())
-    true_top100_set = set(np.argpartition(-flux, 100)[:100].tolist())
-    logflux = np.log(flux)
-    print(f"[data] {n_total} designs; true_best flux={true_best:.4f}", flush=True)
+    os.makedirs(RESULTS, exist_ok=True)
+    X, flux, logflux, true_best, true_top100_set, n_total = load_data(args.data_dir)
+    print(f"[data] {n_total} designs (6^7={6 ** 7}); true_best flux={true_best:.4f}",
+          flush=True)
 
-    sel_rows, ncurve_rows = [], []
-    for N in NS:
-        t0 = time.time()
-        for seed in range(args.seeds):
-            r = eval_draw(N, seed, X, flux, logflux, true_best, true_top100_set)
-            sel_rows.append(dict(N=r["N"], seed=r["seed"], law_top1=r["law_top1"],
-                                 bb_top1=r["bb_top1"], law_ov=r["law_ov"], bb_ov=r["bb_ov"]))
-            ncurve_rows.append(dict(N=r["N"], seed=r["seed"], r2_law=r["r2_law"], r2_bb=r["r2_bb"]))
-        print(f"[N={N:4d}] done ({args.seeds} seeds) t={time.time()-t0:.0f}s", flush=True)
+    ncurve = run_ncurve(X, flux, logflux, true_best, true_top100_set)
+    ncurve.to_csv(os.path.join(RESULTS, "sim_Ncurve.csv"), index=False)
+    print("[done] wrote results/sim_Ncurve.csv", flush=True)
 
-    sel_df = pd.DataFrame(sel_rows)
-    sel_df.to_csv(os.path.join(RESULTS, "selection_regime.csv"), index=False)
+    sel = run_selection_regime(X, flux, logflux, true_best, true_top100_set, args.seeds)
+    sel.to_csv(os.path.join(RESULTS, "selection_regime.csv"), index=False)
+    print("[done] wrote results/selection_regime.csv", flush=True)
 
-    nc_df = pd.DataFrame(ncurve_rows)
-    ncurve_summary = nc_df.groupby("N", as_index=False)[["r2_law", "r2_bb"]].mean()
-    ncurve_summary.to_csv(os.path.join(RESULTS, "sim_Ncurve.csv"), index=False)
-
-    per_N = {}
-    for N, g in sel_df.groupby("N"):
-        per_N[str(int(N))] = dict(
-            law_top1=round(float(g["law_top1"].mean()), 3),
-            bb_top1=round(float(g["bb_top1"].mean()), 3),
-            law_top100=round(float(g["law_ov"].mean()), 1),
-            bb_top100=round(float(g["bb_ov"].mean()), 1),
-        )
-    summary = dict(per_N=per_N, n_seeds=args.seeds,
-                   law_wins_region_all_N=all(per_N[k]["law_top100"] > per_N[k]["bb_top100"] for k in per_N))
-    with open(os.path.join(RESULTS, "selection_regime_summary.json"), "w") as fh:
-        json.dump(summary, fh, indent=2)
-
-    print("\n== per-N selection summary ==")
-    print(json.dumps(summary, indent=2))
-    print("[done] wrote results/selection_regime.csv, results/selection_regime_summary.json, "
-          "results/sim_Ncurve.csv")
+    print("\n== selection payoff medians (law_ov vs bb_ov) by N ==")
+    print(sel.groupby("N")[["law_ov", "bb_ov"]].median())
 
 
 if __name__ == "__main__":

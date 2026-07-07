@@ -21,6 +21,8 @@ from sklearn.metrics import r2_score
 SEED = 0
 EPS = 1e-3
 MAX_TERMS = 10
+NS = [50, 100, 200, 500, 1000]
+N_TEST = 4000          # disjoint held-out test rows for R2_det (fixed, leakage-free)
 COLS = ["EA", "EB", "EC", "ED", "EE", "EF", "EG"]
 
 
@@ -203,3 +205,90 @@ def selection_metrics(pred_full, flux_full, true_best, true_top100_set, tie_rng)
     return dict(mean_top1_regret=mean_top1_regret, pick_top1_regret=pick_top1_regret,
                 best_in_plateau_regret=best_in_plateau_regret, n_tied_best=n_tied,
                 top100_overlap=int(overlap), pick=pick)
+
+
+# --------------------------------------------------------------------------
+# Evaluate ONE training-subset draw at size N.
+#   Returns r2_law (flux scale), r2_bb (flux scale), lambda, selection metrics
+#   for law and bb over the full space, the chosen law model + Pareto curve.
+# Leakage-free: train rows are a random subset; test rows are a disjoint random
+# draw of N_TEST OTHER rows; selection ranks the WHOLE space (train rows included
+# in the ranking universe is fine -- the metric is "did the model's #1 / top-100
+# over ALL designs hit the truth"; this is the paper's deployment scenario).
+# --------------------------------------------------------------------------
+def eval_N(N, Xall_raw, flux_full, logflux_full, true_best, true_top100_set,
+           rng, full_rank=True, rank_subset_size=60000):
+    n_total = Xall_raw.shape[0]
+    # disjoint train / test split of row indices
+    perm = rng.permutation(n_total)
+    tr_idx = perm[:N]
+    te_idx = perm[N:N + N_TEST]
+    Xtr = Xall_raw[tr_idx]
+    Xte = Xall_raw[te_idx]
+    ytr_log = logflux_full[tr_idx]
+    yte_flux = flux_full[te_idx]
+
+    # ---- sparse-basis SR Pareto (fit on log target) ----
+    models, maxL = fit_omp_pareto(Xtr, ytr_log, max_terms=MAX_TERMS)
+    pareto = {}
+    for L, m in models.items():
+        yp_log = omp_predict_log(m, Xte)
+        yp_flux = np.exp(np.clip(yp_log, -50, 50))   # back-transform to flux scale
+        pareto[L] = r2_det(yte_flux, yp_flux)
+    Lbudget = maxL  # complexity budget actually achievable (<=10)
+    law_model = models[Lbudget]
+    r2_law = pareto[Lbudget]
+
+    # ---- RandomForest ceiling (fit on log target for fairness, same scale) ----
+    rf, rf_params = fit_rf_tuned(Xtr, ytr_log, inner_seed=SEED)
+    yte_bb_flux = np.exp(np.clip(rf.predict(Xte), -50, 50))
+    r2_bb = r2_det(yte_flux, yte_bb_flux)
+    lam = float(r2_law / max(r2_bb, EPS))
+
+    # ---- SELECTION over the FULL space (exact ground truth) ----
+    # deterministic tie-break RNG (seed-stable per N for reproducibility)
+    tie_rng = default_rng(1000 + int(N))
+    # law prediction on all designs (log scale; monotone -> ranking valid)
+    law_pred_full = omp_predict_log(law_model, Xall_raw)
+    law_sel = selection_metrics(law_pred_full, flux_full, true_best,
+                                true_top100_set, tie_rng)
+    # black-box prediction on all designs (RF.predict on 280k is fast)
+    bb_pred_full = rf.predict(Xall_raw)
+    bb_sel = selection_metrics(bb_pred_full, flux_full, true_best,
+                               true_top100_set, default_rng(2000 + int(N)))
+    bb_rank_universe = n_total
+
+    # HEADLINE top1_regret = expected regret over the tied-best plateau (honest:
+    # the model declares these its best and you would pick one at random).
+    return dict(
+        N=int(N), r2_law=float(r2_law), r2_blackbox=float(r2_bb),
+        lambda_ratio=lam,
+        top1_regret_law=float(law_sel["mean_top1_regret"]),
+        top1_regret_law_pick=float(law_sel["pick_top1_regret"]),
+        best_in_plateau_regret_law=float(law_sel["best_in_plateau_regret"]),
+        n_tied_best_law=int(law_sel["n_tied_best"]),
+        top100_overlap_law=int(law_sel["top100_overlap"]),
+        top1_regret_blackbox=float(bb_sel["mean_top1_regret"]),
+        top1_regret_blackbox_pick=float(bb_sel["pick_top1_regret"]),
+        n_tied_best_blackbox=int(bb_sel["n_tied_best"]),
+        top100_overlap_blackbox=int(bb_sel["top100_overlap"]),
+        Lbudget=int(Lbudget), pareto=pareto, rf_params=rf_params,
+        law_terms=law_terms(law_model), bb_rank_universe=int(bb_rank_universe),
+    )
+
+
+def format_law(model):
+    """Compose a compact human-readable law string (on log(flux_G) scale)."""
+    terms = law_terms(model)
+    # rebuild in ORIGINAL units (undo column standardisation) so the printed
+    # coefficients act on the actual basis functions, not the z-scored columns.
+    names = model["names"]; mu = model["mu"]; sd = model["sd"]; coef = model["coef"]
+    ymu = model["ymu"]
+    intercept = ymu - float(np.sum(coef * mu / sd))
+    pieces = []
+    for nm, c in terms:
+        k = names.index(nm)
+        raw_c = coef[k] / sd[k]
+        pieces.append(f"{raw_c:+.3g}*{nm}")
+    expr = f"{intercept:+.3g} " + " ".join(pieces)
+    return "log(flux_G) ~ " + expr.strip()
