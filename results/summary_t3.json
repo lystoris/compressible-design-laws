@@ -1,0 +1,9 @@
+{
+  "traj": "t3",
+  "n": 13,
+  "partial_effd": -0.7049622336027027,
+  "partial_nomd": 0.6008434567127314,
+  "rho_effd": -0.4725274725274725,
+  "rho_nomd": -0.1155434380549532,
+  "effd_beats_nomd": true
+}

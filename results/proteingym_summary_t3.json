@@ -1,0 +1,10 @@
+{
+  "traj": "t3",
+  "n_assays": 69,
+  "partial_effd": -0.8006606864655397,
+  "partial_nomd": 0.3008321992137689,
+  "rho_effd": -0.7796412000277974,
+  "rho_nomd": -0.0795824546872655,
+  "n_compress_0p7": 0,
+  "effd_beats_nomd": true
+}
