@@ -1,0 +1,14 @@
+id,group,nom_d,eff_d,r2_law,r2_bb,N
+beta-carotene,positive,3,1.26,0.92,0.975,32
+tryptophan,negative,5,3.39,-0.269,0.133,307
+limonene,negative,9,6.17,0.39,0.625,30
+isoprenol,negative,121,12.1,0.432,0.449,401
+jervis-RBS,negative,14,3.38,0.54,0.577,60
+vanlent-pCA,negative,19,5.79,0.493,0.513,403
+vanlent-simulator,simulator,7,2.85,0.67,0.902,2000
+poelwijk,keystone,13,4.02,0.318,0.932,2000
+gb1,contrast,4,3.93,-0.114,0.132,2000
+avgfp,positive,233,80.81,0.102,0.396,2000
+aav,contrast,28,22.98,0.214,0.563,2000
+smanski-nif,positive,115,48.68,0.04,-0.017,80
+pca-paperA,positive,5,2.07,0.38,0.69,91
