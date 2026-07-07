@@ -7,7 +7,7 @@ in `paper/Patterns/Xu_etal_Patterns_Manuscript.docx`.
 
 ## R-1. Panel subsample cap: Methods says 1,500; the actual runs used 2,000
 
-**Status:** code aligned to 2,000 (Task 5); **manuscript text correction pending** (Task 17).
+**Status:** code aligned to 2,000 (Task 5); **manuscript corrected** — applied as a tracked change (author "Jiabao Xu") in `Xu_etal_Patterns_Manuscript.docx` on 2026-07-07 (both occurrences: 1,500→2,000).
 
 - The published `panel_t3.csv` golden and all three trajectory summaries (`summary_t{1,2,3}.json`,
   round-08) were generated with a **max_n = 2,000** subsample cap. Confirmed: every trajectory's
