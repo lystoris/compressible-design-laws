@@ -1,5 +1,13 @@
 stream,traj,axis,partial
+curated,t1,effective d,-0.7241200588099453
+curated,t1,nominal d,0.549929022847814
+curated,t2,effective d,-0.6223167882681483
+curated,t2,nominal d,0.509348888959695
 curated,t3,effective d,-0.7049622336027027
 curated,t3,nominal d,0.6008434567127314
+ProteinGym,t1,effective d,-0.8191518532943004
+ProteinGym,t1,nominal d,0.3318951783377946
+ProteinGym,t2,effective d,-0.8207633150219911
+ProteinGym,t2,nominal d,0.3446169547795355
 ProteinGym,t3,effective d,-0.8006606864655397
 ProteinGym,t3,nominal d,0.3008321992137689
