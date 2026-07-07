@@ -1,12 +1,12 @@
-# Data archive — `compressible-design-laws`
+# Data archive: `compressible-design-laws`
 
 This folder is the **data payload** for the code release accompanying Xu, Tu & Xu,
 "Effective dimensionality governs when combinatorial design landscapes compress into interpretable
-laws" (*Patterns*). It is **not committed to git** (the repo `.gitignore` excludes `data/**`); it is
+laws". It is **not committed to git** (the repo `.gitignore` excludes `data/**`); it is
 uploaded to Zenodo and fetched by `scripts/fetch_data.py` / `make data`.
 
-Upload this whole `data/` folder (or a zip of it) as the Zenodo record, then record the minted DOI in
-`data/README.md` and the repo's top-level `README.md`.
+**Zenodo DOI: [10.5281/zenodo.21238983](https://doi.org/10.5281/zenodo.21238983)** — `make data`
+downloads and unpacks this record into `data/`.
 
 ## Layout
 
