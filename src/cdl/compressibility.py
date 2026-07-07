@@ -1,13 +1,10 @@
 import itertools
-import warnings
 import numpy as np
 from scipy import stats
 from sklearn.model_selection import KFold
 from sklearn.linear_model import LinearRegression
 from cdl.stats import r2_det
 from cdl.blackbox import tune_svr, svr_pred
-
-warnings.filterwarnings("ignore")
 
 L_STAR=10; N_OUTER=5
 
