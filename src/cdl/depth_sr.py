@@ -5,7 +5,11 @@ research-loop/sr-compressible-design-laws/rounds/round-02/runs/round-02-t3/work/
 (functions safe_div/safe_inv/standardize_cols/screen_keep, build_feature_bank, greedy_law/
 predict_law, the KernelRidge(RBF) black-box ceiling (_median_gamma/_cap_subsample/
 krr_fit_predict/krr_cv_r2), lambda_depth_nestedcv (the compressibility scorer, DEPTH budget +
-nested k-fold), and selection_fitness). r2_det is imported from cdl.stats (identical logic).
+nested k-fold), and selection_fitness). r2_det is the round-02 engine's OWN local version
+(threshold 1e-12, returns 0.0 on degenerate variance) — deliberately NOT cdl.stats.r2_det
+(which is faithful to panel.py and returns np.nan on degenerate variance). The distinction
+matters: a NaN would make every `NaN > best` comparison False and silently freeze the
+depth/alpha grid search on its first candidate, so the engine keeps its own 0.0 semantics.
 
 A "law" is a sparse linear combination of basis-feature trees built by a recursive grammar
 whose budget is expression DEPTH. Leaves (depth 1) are raw vars + saturating transforms of a
@@ -23,11 +27,25 @@ from sklearn.kernel_ridge import KernelRidge
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.model_selection import KFold
 
-from cdl.stats import r2_det
-
 # ----------------------------------------------------------------------------------------
 # 0. Helpers
 # ----------------------------------------------------------------------------------------
+
+
+def r2_det(y_true, y_pred):
+    """Coefficient of determination on the held-out fold. NOT correlation^2.
+
+    Ported VERBATIM from round-02 analysis.py (~line 56): returns 0.0 (NOT np.nan) when the
+    target variance is degenerate (<= 1e-12). This 0.0 semantics is load-bearing — the engine's
+    grid searches compare `r2 > best`, and a NaN there would freeze selection on the first
+    candidate. Distinct on purpose from cdl.stats.r2_det (panel.py-faithful, returns np.nan)."""
+    y_true = np.asarray(y_true, float)
+    y_pred = np.asarray(y_pred, float)
+    ss_res = np.sum((y_true - y_pred) ** 2)
+    ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
+    if ss_tot <= 1e-12:
+        return 0.0
+    return 1.0 - ss_res / ss_tot
 
 
 def safe_div(a, b):
