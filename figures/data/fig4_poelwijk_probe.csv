@@ -1,0 +1,5 @@
+transform,r2_law,r2_bb
+raw,0.59,0.932
+log,0.606,0.87
+rank-normal,0.531,0.752
+"interpretable (binary, linear+interaction)",0.318,0.932

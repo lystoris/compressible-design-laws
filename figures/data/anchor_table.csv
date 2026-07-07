@@ -1,0 +1,5 @@
+anchor,d,N,nfolds,r2_law,r2_blackbox,lambda_ratio,lambda_clipped,median_nodes,screened_features,allow_nonlinear,example_law
+betacarotene,3,32,5,0.9199,0.9751,0.9434,0.9434,10,3,True,C + C/B + A*C
+tryptophan,5,307,5,0.3296,0.3815,0.8641,0.8641,10,5,True,TAL1*PFK1 + 1/TKL1 + TKL1
+limonene,9,30,5,0.3896,0.6251,0.6233,0.6233,10,9,True,Q40322_MENSP/ERG8_YEAST + 1/KIME_YEAST + Q9FD86_STAAU
+isoprenol,121,401,5,0.4322,0.4564,0.9469,0.9469,10,30,False,PP_0815 + PP_0812 + PP_0528 + PP_0814 + PP_0813
