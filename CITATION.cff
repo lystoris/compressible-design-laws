@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this software or data, please cite the paper below."
+title: "Compressible design laws: reproducibility code for \"Effective dimensionality governs when combinatorial design landscapes compress into interpretable laws\""
+type: software
+authors:
+  - given-names: Joshua
+    family-names: Xu
+  - given-names: Weiming
+    family-names: Tu
+  - given-names: Jiabao
+    family-names: Xu
+repository-code: "https://github.com/lystoris/compressible-design-laws"
+license: MIT
+version: 0.1.0
+date-released: "2026-01-01"
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.21238983
+    description: "Data archive (Zenodo) accompanying this code release"
+preferred-citation:
+  type: article
+  title: "Effective dimensionality governs when combinatorial design landscapes compress into interpretable laws"
+  authors:
+    - given-names: Joshua
+      family-names: Xu
+    - given-names: Weiming
+      family-names: Tu
+    - given-names: Jiabao
+      family-names: Xu
+  journal: Patterns
+  year: 2026
