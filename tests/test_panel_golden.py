@@ -2,6 +2,7 @@ import os, subprocess, sys, pandas as pd, numpy as np, pytest
 HERE = os.path.dirname(__file__); ROOT = os.path.dirname(HERE)
 DATA = os.path.join(ROOT, "data", "cleaned")
 
+@pytest.mark.slow  # full 13-dataset panel run (~12 min); excluded from the fast suite
 @pytest.mark.skipif(not os.path.exists(os.path.join(DATA,"manifest.csv")),
                     reason="cleaned data not present (fetch from Zenodo)")
 def test_panel_t3_matches_golden():
