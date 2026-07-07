@@ -1,5 +1,9 @@
 import numpy as np
 
+# Fixed family -> integer code for deterministic RNG seeding across interpreter runs
+# (Python's built-in hash() is randomized per-process via PYTHONHASHSEED).
+_FAMILY_CODE = {"additive": 0, "michaelis_menten": 1, "random_gp": 2}
+
 
 def safe_div(a, b):
     b = np.asarray(b, float)
@@ -69,7 +73,9 @@ def make_sweep_cell(d, k, sigma, N, encoding, seed):
 def make_decoupled(d_eff, d_nom, family, rep, N=500, noise=0.1, seed=0):
     """d_eff genuinely active variables among d_nom total (rest are inert decoys).
     family in {"additive", "michaelis_menten", "random_gp"}. Returns (X, y, groups)."""
-    combo = (int(seed), int(d_eff), int(d_nom), int(rep), hash(family) & 0xFFFF)
+    if family not in _FAMILY_CODE:
+        raise ValueError(f"unknown family: {family}")
+    combo = (int(seed), int(d_eff), int(d_nom), int(rep), _FAMILY_CODE[family])
     rng = np.random.default_rng(combo)
     X = rng.uniform(0, 1, size=(N, d_nom))
     Xa = X[:, :d_eff]

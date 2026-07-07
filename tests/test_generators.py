@@ -18,3 +18,9 @@ def test_decoupled_only_active_drive_signal():
         pred = A @ lstsq(A, y, rcond=None)[0]
         r2 = 1 - np.sum((y - pred) ** 2) / np.sum((y - y.mean()) ** 2)
         assert (r2 > thresh) if cols == slice(0, 3) else (r2 < thresh)
+
+
+def test_decoupled_is_deterministic():
+    a = make_decoupled(3, 9, "additive", rep=0, N=100, noise=0.1, seed=0)
+    b = make_decoupled(3, 9, "additive", rep=0, N=100, noise=0.1, seed=0)
+    assert np.array_equal(a[0], b[0]) and np.array_equal(a[1], b[1]) and a[2] == b[2]
