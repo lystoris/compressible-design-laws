@@ -58,6 +58,11 @@ in `paper/Patterns/Xu_etal_Patterns_Manuscript.docx`.
   decoupling claim — effective-d governs compressibility, nominal-d carries no signal — is reproduced
   decisively from source, with the confound-controlled partial correlation matching the paper exactly and
   η² fractionally under the reported range due to one noisier reconstructed synthetic family.
+- **Schema note:** the reconstructed `effdim_grid_t1.csv` carries `family,d_nom,d_eff,rep,r2_law` only; the
+  audited golden fixture additionally has `top1_regret,n_terms` (which require a candidate-pool selection
+  step outside `run_anchor`'s per-cell contract and are not needed for the η²/partial statistics). The
+  reconstruction emits family label `additive` where the audited grid used `additive_linear`; the two
+  grids are aggregated independently, never joined by label.
 
 ## R-2. `mva-243` manifest row has no data file
 
