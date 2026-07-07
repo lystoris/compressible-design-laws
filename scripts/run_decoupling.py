@@ -67,6 +67,10 @@ def main():
                                                     noise=args.noise, seed=1)
                     feat = [f"x{i}" for i in range(X.shape[1])]
                     r2_law, _ = run_anchor(X, y, feat, allow_nonlinear=True, topk=40, fast=True)
+                    # Schema note: the reconstruction grid carries r2_law only. The audited golden
+                    # (effdim_grid_t1.csv) additionally has top1_regret / n_terms recorded by round-05,
+                    # but the decoupling result (Fig 3C/D: eta2 and partial rho vs d_eff/d_nom) depends
+                    # solely on r2_law, so those two columns are intentionally not re-derived here.
                     rows.append(dict(family=family, d_nom=d_nom, d_eff=d_eff, rep=rep,
                                       r2_law=r2_law))
         print(f"[decoupling] finished family={family}  cells={len(rows)}  "

@@ -53,8 +53,10 @@ in `paper/Patterns/Xu_etal_Patterns_Manuscript.docx`.
   high-variance, and without the original generator code its within-d_eff scatter can't be matched;
   additive (0.925) and MM (0.835) actually exceed the paper's (0.807, 0.774). The noise level (0.4) and
   panel engine as scorer are *inferred* to match the recovered round-05 target curves. The committed
-  audited `effdim_grid_t{1,2,3}.csv` grids (the paper's actual data, η²=0.748/0.683/0.729) are shipped as
-  reference artifacts and `verify.py` checks they still yield the reported η²/partials. Net: the
+  audited grid `tests/fixtures/golden/effdim_grid_t1.csv` (the paper's actual **t1** data) is shipped as
+  a reference artifact and the fast golden test checks it still yields η²=0.748 / partial −0.837; the
+  t2/t3 η² values (0.683/0.729) quoted above are read from the round-05 run logs, **not** committed as
+  CSV fixtures. Net: the
   decoupling claim — effective-d governs compressibility, nominal-d carries no signal — is reproduced
   decisively from source, with the confound-controlled partial correlation matching the paper exactly and
   η² fractionally under the reported range due to one noisier reconstructed synthetic family.
