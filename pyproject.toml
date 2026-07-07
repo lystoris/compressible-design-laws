@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cdl"
+version = "0.1.0"
+description = "Compressible design laws: reproducibility code for Xu et al. (Patterns)"
+requires-python = ">=3.9"
+dependencies = ["numpy", "scipy", "pandas", "scikit-learn"]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
