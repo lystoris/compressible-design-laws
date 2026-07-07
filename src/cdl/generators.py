@@ -58,6 +58,11 @@ def _make_generator(d, k, encoding, gen_seed):
     return sample_X, true_f
 
 
+# Public alias — scripts/run_sweep.py ports round-02 analysis.py's `main()` sweep driver
+# verbatim, which calls this generator directly as `make_generator(d, k, enc, gen_seed)`.
+make_generator = _make_generator
+
+
 def make_sweep_cell(d, k, sigma, N, encoding, seed):
     """One 405-sweep cell: linear + saturating + interaction landscape, sampled N times
     and noised at sigma*std(y_clean). Returns (X, y, feat)."""
