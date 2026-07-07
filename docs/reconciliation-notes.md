@@ -66,6 +66,23 @@ in `paper/Patterns/Xu_etal_Patterns_Manuscript.docx`.
   reconstruction emits family label `additive` where the audited grid used `additive_linear`; the two
   grids are aggregated independently, never joined by label.
 
+## R-4. Fig 6B selection regime reconstructed (round-07 code not persisted)
+
+**Status:** reconstructed; audited golden shipped; aggregate payoff reproduced.
+
+- Fig 6A (`sim_Ncurve.csv`) reproduces the round-04 golden **bit-exact** (r2_law Δ ≤ 0.0001; law top-100
+  overlap {0,17,27,17,27}) — the round-04 engine is byte-exact-ported into `cdl.sim_engine`.
+- Fig 6B (`selection_regime.csv`, N × 20 seeds) came from round-07, which has **no persisted `.py`**
+  (round-07 was mainly a gplearn cross-check). `run_simulator.py` reconstructs it by looping the
+  byte-exact `eval_N` engine over `default_rng((seed, N))` draws. Because round-07's exact training-draw
+  seeds are lost, the per-cell values differ from the golden, and the black-box ceiling's strength at
+  large N is seed-sensitive (at N=1000 a favourable bb draw can edge out the law in a single trajectory).
+- **Aggregate payoff reproduced:** pooled over N ≥ 100 the reconstruction gives median law top-100
+  overlap **30** vs black-box **13.5** — matching the paper's "law recovers ~17–27 vs ~9–14 for the black
+  box." The audited round-07 `selection_regime.csv` (law > bb at every N: 13/18/25.5/33/33.5 vs
+  0/0.5/8/18/27.5) is shipped verbatim as `tests/fixtures/golden/selection_regime.csv`. The slow test
+  asserts the pooled payoff (the paper's actual claim), not exact per-cell match.
+
 ## R-2. `mva-243` manifest row has no data file
 
 **Status:** flagged; manifest cleanup pending.
