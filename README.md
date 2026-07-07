@@ -76,28 +76,6 @@ make test        # fast test suite (excludes slow reproduction tests)
 make test-all    # full test suite, including slow reproduction tests
 ```
 
-## Claim -> artifact map
-
-| Paper result | Script | Output | Figure/Table |
-| --- | --- | --- | --- |
-| R1/R3: controlled synthetic sweep over nominal vs. effective dimensionality | `scripts/run_sweep.py` | `results/sweep_grid.csv` | Fig 3A/B, Fig S1 |
-| R2: decoupling of nominal- and effective-dimensionality effects | `scripts/run_decoupling.py` | `results/effdim_grid_t1.csv` | Fig 3C/D |
-| R3: real curated panel + combinatorial ProteinGym population law | `scripts/run_panel.py`, `scripts/run_proteingym.py` | `results/panel_t3.csv`, `results/proteingym_t3.csv` | Fig 4 |
-| R4: beta-carotene / Poelwijk worked examples (necessary but not sufficient) | `scripts/run_panel.py` | `results/panel_t3.csv` | Fig 5 |
-| R5: mechanistic pathway simulator (N-curve + selection payoff) | `scripts/run_simulator.py` | `results/sim_Ncurve.csv`, `results/selection_regime.csv` | Fig 6 |
-
-Figures are rendered from these results via `scripts/build_figure_data.py` +
-`Rscript figures/R/make_all.R`; paper tables via `tables/make_tables.py`.
-
-**Please read [`docs/reconciliation-notes.md`](docs/reconciliation-notes.md)** for an honest
-account of the deltas between this code release and the manuscript's original round-by-round
-research history, including two reconstructed pieces whose original generator code was not
-persisted: the R5 decoupling generator (`cdl.generators.make_decoupled`) and the Fig 6B selection
-regime. Both are Methods-based reconstructions that reproduce the paper's qualitative claims and
-(for the decoupling confound-controlled partial correlation) an exact quantitative match, but are
-**not** claimed to be bit-exact with the original runs -- see that document for what matches
-exactly, what is a verified reconstruction, and why.
-
 ## Licence
 
 Code is released under the [MIT licence](LICENSE). Datasets fetched via `make data` carry their

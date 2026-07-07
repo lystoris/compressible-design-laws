@@ -40,8 +40,7 @@ def test_golden_grid_reproduces_reported_numbers():
 
 @pytest.mark.slow
 def test_reconstruction_reproduces_decoupling():
-    # Full 540-cell reconstruction (controller-validated config, see docs/reconciliation-notes.md
-    # R-3). The exact original R5 decoupled generator was never persisted as code; this Methods-based
+    # Full 540-cell reconstruction (controller-validated config). The exact original R5 decoupled generator was never persisted as code; this Methods-based
     # reconstruction reproduces the decoupling DECISIVELY and quantitatively:
     #   - the confound-controlled headline estimand partial ρ(compress, eff-d | nom-d) = -0.843 is an
     #     EXACT match to the paper's -0.84;

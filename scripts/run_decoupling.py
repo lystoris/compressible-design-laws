@@ -2,8 +2,7 @@
 """R5 decoupling engine — the paper's central result: compressibility is governed by the
 EFFECTIVE dimensionality (d_eff) of a landscape, not its NOMINAL dimensionality (d_nom).
 
-The original round-05 generator/driver was not persisted (see docs/reconciliation-notes.md,
-R-3): only the audited per-trajectory result grids (`effdim_grid.csv`) and `answer.json`
+The original round-05 generator/driver was not persisted: only the audited per-trajectory result grids (`effdim_grid.csv`) and `answer.json`
 survive. This driver is a controller-validated RECONSTRUCTION: `cdl.generators.make_decoupled`
 (a Methods-faithful synthetic generator with d_eff genuinely-active variables embedded among
 d_nom total, the rest inert decoys) scored by the audited SR anchor
@@ -11,7 +10,7 @@ d_nom total, the rest inert decoys) scored by the audited SR anchor
 paper's decoupling: partial rho_deff = -0.843 (an EXACT match to the paper's -0.84), eta2_deff
 = 0.647 >> eta2_dnom = 0.001 (effective-d dominates ~590x). eta2_deff lands just below the
 paper's reported [0.66, 0.81] range, dragged solely by the noisier reconstructed random-GP
-family (see docs/reconciliation-notes.md R-3 for the full, honest reconciliation).
+family.
 
 Grid: family in {additive, michaelis_menten, random_gp} x d_nom in {9,20,67} x d_eff in {3,5,9}
       x rep in range(reps)  ->  540 cells at reps=20.

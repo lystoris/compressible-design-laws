@@ -11,7 +11,7 @@ validates the frozen canon. It becomes an end-to-end reproduction check only aft
 `make reproduce` regenerates `results/` from source (and the slow golden tests in tests/
 are where the engines are actually re-run and compared to the audited outputs).
 
-Targets are grounded in docs/reconciliation-notes.md (R-1..R-4): they reflect what
+Targets reflect what
 this code release ACTUALLY reproduces, not the paper's original plan placeholders.
 Notably:
   - R-3: the reconstructed R5 decoupling grid's eta2_deff (0.647) is checked via a

@@ -48,7 +48,7 @@ pb <- ggplot(sb, aes(comp, sel)) +
 # (c) DECOUPLING: compressibility vs effective d SET by decoys, faceted by generator family
 # NOTE: fig2_effdim_pooled.csv / fig2_eta2.csv here come from this repo's reconstructed
 # decoupling grid (results/effdim_grid_t1.csv), which emits family label "additive" where the
-# original round-05 audited grid used "additive_linear" (see docs/reconciliation-notes.md R-3)
+# original round-05 audited grid used "additive_linear"
 # -- both keys are mapped so this labeller works against either source.
 fam_lab <- c(additive_linear = "additive", additive = "additive",
              michaelis_menten = "Michaelis-Menten", random_gp = "random GP")

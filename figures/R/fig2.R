@@ -2,7 +2,7 @@
 # when the black box itself fails. Run: Rscript figures/R/fig2.R
 source("figures/R/theme_pub.R")
 
-# anchor_table.csv: round-03 was not reconstructed for this repo (see docs/reconciliation-notes.md);
+# anchor_table.csv: round-03 was not reconstructed for this repo;
 # this is the committed, audited round-03-t3 anchor output, copied in verbatim.
 anch <- read_csv(file.path(DATA_DIR,"anchor_table.csv"), show_col_types=FALSE)
 pop  <- read_csv(file.path(DATA_DIR,"fig3_population.csv"), show_col_types=FALSE)

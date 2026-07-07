@@ -15,7 +15,7 @@ The committed `figures/data/*.csv` are the PAPER-CANONICAL figure inputs, so the
 committed/rendered figures match the published paper. Several panels need data from
 ALL THREE analysis trajectories (t1/t2/t3), which a default reproduction run does not
 produce (this repo reproduces trajectory t3 for the curated/ProteinGym panels and t1
-for the decoupling grid -- see docs/reconciliation-notes.md). To avoid silently
+for the decoupling grid). To avoid silently
 replacing a complete canonical CSV with a partial one, each builder below only writes
 when its FULL required inputs are present in results/; otherwise it PRESERVES the
 committed canonical file and prints a [preserve] line explaining what to run to
