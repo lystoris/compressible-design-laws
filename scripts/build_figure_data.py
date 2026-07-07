@@ -1,48 +1,73 @@
 #!/usr/bin/env python3
-"""Assemble tidy CSVs for the figures from THIS repo's `results/` (+ `data/cleaned/`).
+"""Assemble tidy CSVs for the paper figures from THIS REPO's reproduced results/.
+
+Ported from paper/v2/figures/data/prep_data.py. The original read from a deep
+research-loop round-08 work directory (`RL`/`R8`); this version reads only from this
+repo's own `results/` (everything `scripts/run_*.py` reproduces/reconstructs -- see
+docs/reconciliation-notes.md for how each results/ file was produced and any deltas
+from the original round runs).
 
 Run: /usr/bin/python3 scripts/build_figure_data.py
-Writes into figures/data/. Ported from ../paper/v2/figures/data/prep_data.py, repointed from
-the paper's multi-trajectory research-loop roots (RL/R8) to this repo's single committed
-trajectory of results (results/*_t3.csv, results/*_t3.json, results/effdim_grid_t1.csv, ...).
+Writes into figures/data/.
 
-WHAT THIS SCRIPT REGENERATES from results/ + data/cleaned/ committed to this repo:
-  - figures/data/fig3_population.csv    <- results/panel_t3.csv + results/proteingym_t3.csv
-  - figures/data/fig5_selection.csv     <- results/selection_regime_summary.json
-  - figures/data/fig5_enzyme_sens.csv   <- data/cleaned/vanlent-simulator.csv
+------------------------------------------------------------------------------------
+PROVENANCE -- every figures/data/*.csv is either:
 
-WHAT IS SHIPPED PRE-COMPUTED under figures/data/ and NOT regenerated here, because the
-paper's figure needs MULTIPLE trajectories or a round this repo did not reconstruct (this
-script refuses to fabricate them from a single trajectory or from thin air):
-  - fig3_partials.csv    needs curated summary_t1/t2/t3.json + proteingym_summary_t1/t2/t3.json
-                          (run_panel.py --traj t1/t2/t3, run_proteingym.py --traj t1/t2/t3);
-                          this repo's results/ only carries the t3 pair.
-  - fig3_pseudorep.csv   needs proteingym_t1.csv specifically (run_proteingym.py --traj t1);
-                          this repo's results/ only carries proteingym_t3.csv.
-  - fig2_effdim_pooled.csv, fig2_eta2.csv
-                          need effdim_grid.csv for t1/t2/t3 (run_decoupling.py --traj t1/t2/t3)
-                          with a per-family eta2 breakdown; this repo's results/ only has
-                          effdim_grid_t1.csv (+ a whole-grid decoupling_summary_t1.json, which
-                          is not broken down per-family), so the paper's pooled/eta2 figure
-                          data is committed as-is.
-  - betacarotene_oof.csv out-of-fold predictions from the audited beta-carotene law fit; the
-                          paper's own prep_data.py does not produce this file either (it ships
-                          it directly under figures/data/) -- committed as-is here too.
-  - figures/data/anchor_table.csv (read directly by figures/R/fig2.R, not by this script)
-                          round-03 was NOT reconstructed for this repo (see
-                          docs/reconciliation-notes.md); this is the committed, audited
-                          round-03-t3 anchor_table.csv, copied in verbatim.
+(A) RECOMPUTED HERE, each run, from results/*.csv|json (this repo's own reproduced or
+    controller-validated reconstructed outputs):
+      fig3_population.csv    <- results/panel_t3.csv + results/proteingym_t3.csv
+      fig3_partials.csv      <- results/summary_t3.json + results/proteingym_summary_t3.json
+      fig3_pseudorep.csv     <- results/proteingym_t3.csv (Tsuboyama pseudoreplication groups)
+      fig2_effdim_pooled.csv <- results/effdim_grid_t1.csv
+      fig2_eta2.csv          <- results/effdim_grid_t1.csv (per-family eta2 via cdl.stats.eta2)
+      fig5_selection.csv     <- results/selection_regime_summary.json
+      fig5_enzyme_sens.csv   <- cdl.simulator.enzyme_sensitivity on data/cleaned/vanlent-simulator.csv
 
-figures/data/figS_calibration.csv (Fig S2) is fully synthetic (no results/ dependency) and is
-regenerated separately by scripts/build_calibration_data.py.
+    NOTE on trajectory coverage: this repo reproduces trajectory t3 for the curated/ProteinGym
+    panels and t1 for the decoupling grid (see docs/reconciliation-notes.md) -- it does NOT
+    have t1/t2/t3 versions of every intermediate the way the original round-08 assembly did.
+    fig3_partials.csv therefore carries one (stream, axis) point per available trajectory
+    (t3 only) instead of the original's three; it is NOT padded with fabricated t1/t2 rows.
+    Likewise fig2_effdim_pooled.csv / fig2_eta2.csv carry t1 only (this repo's reconstructed
+    decoupling grid; see docs/reconciliation-notes.md R-3), not a t1/t2/t3 pool.
 
-DO NOT expand this script to recompute fig3_partials.csv / fig3_pseudorep.csv /
-fig2_effdim_pooled.csv / fig2_eta2.csv from the single t3/t1 trajectory in results/ -- that
-would silently drop the paper's multi-trajectory evidence in those panels (e.g. Fig 4c's
-partial-correlation forest is supposed to show 3 trajectories per stream). If you have
-genuinely regenerated results/{summary,proteingym_summary}_{t1,t2}.json and
-results/effdim_grid_{t2,t3}.csv, extend this script deliberately and update this comment --
-don't let an automated edit quietly re-add that logic.
+(B) a RECORDED AUDITED ARTIFACT: committed once, verbatim, in figures/data/, with its
+    provenance documented below -- read (never re-typed as Python constants) by this
+    script's callers (the R figure scripts) directly. This script does not write these
+    files; it only checks they are present, so a missing one fails loudly instead of
+    silently producing a blank/wrong panel.
+
+      fig4_poelwijk_probe.csv -- round-08 Poelwijk link-transform probe: raw R2_law 0.590,
+                                  log 0.606, rank-normal 0.531, interpretable 0.318 (r2_bb
+                                  alongside). THE FIX: the original prep_data.py hand-typed
+                                  these four numbers inline as `dict(transform=..., r2_law=...)`
+                                  literals despite its own module docstring claiming "no
+                                  hand-typed stats" -- the honesty gap this task closes. They
+                                  are now a single committed CSV with this comment as their
+                                  provenance record (round-08 Poelwijk link-probe), regenerated
+                                  by a future `scripts/run_panel.py --only poelwijk --probe`
+                                  mode if one is added; until then this is the recorded value.
+      anchor_table.csv         -- round-03-t3 audited anchor table (Fig 2a: absolute R2det vs
+                                  ratio-to-black-box). Round-03's generating driver was not
+                                  persisted for this repo (only the per-trajectory result CSVs
+                                  survive -- same pattern as R-3 in docs/reconciliation-notes.md)
+                                  -- copied in verbatim from the audited round-03-t3
+                                  work/results/anchor_table.csv.
+      betacarotene_oof.csv     -- out-of-fold beta-carotene law fit (Fig 5b: titre ~ C + C/B +
+                                  A*C). Copied verbatim from paper/v2/figures/data/; the fitting
+                                  notebook is not part of this repo's scripts/.
+      figS_calibration.csv     -- RF participation-ratio estimator calibration sweep (Fig S2).
+                                  Copied verbatim from paper/v2/figures/data/.
+                                  scripts/build_calibration_data.py (ported from
+                                  prep_calibration.py) can regenerate an equivalent sweep from
+                                  scratch, but its cells are reps of random synthetic
+                                  landscapes and won't be bit-identical to the committed one
+                                  actually plotted in the paper, so the recorded CSV is kept
+                                  (see that script's docstring).
+
+These four files are committed directly in figures/data/ and are NOT written by this
+script; main() only checks they are present.
+------------------------------------------------------------------------------------
 """
 from __future__ import annotations
 import os
@@ -51,15 +76,23 @@ import json
 import pandas as pd
 from scipy import stats
 
+from cdl.stats import eta2
+from cdl.simulator import load_simulator, enzyme_sensitivity
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 RESULTS = os.path.join(ROOT, "results")
 FIG_DATA = os.path.join(ROOT, "figures", "data")
 CLEANED = os.path.join(ROOT, "data", "cleaned")
 
-METABOLIC = {"beta-carotene", "tryptophan", "limonene", "isoprenol", "jervis-RBS",
-             "vanlent-pCA", "pca-paperA", "smanski-nif"}
 PROTEIN_CUR = {"poelwijk", "gb1", "avgfp", "aav"}
+
+RECORDED_ARTIFACTS = [
+    "fig4_poelwijk_probe.csv",
+    "anchor_table.csv",
+    "betacarotene_oof.csv",
+    "figS_calibration.csv",
+]
 
 
 def domain(idv, src):
@@ -71,7 +104,7 @@ def domain(idv, src):
 
 
 def build_population():
-    """Fig 4a/b (population): curated panel_t3 + ProteinGym proteingym_t3, joined + labelled."""
+    """Fig 4a/b/c/d (population): curated panel_t3 + ProteinGym proteingym_t3, joined + labelled."""
     cur = pd.read_csv(os.path.join(RESULTS, "panel_t3.csv"))
     cur["source"] = "curated"
     pg = pd.read_csv(os.path.join(RESULTS, "proteingym_t3.csv"))
@@ -83,6 +116,72 @@ def build_population():
     out = os.path.join(FIG_DATA, "fig3_population.csv")
     pop.to_csv(out, index=False)
     return pop, out
+
+
+def build_partials():
+    """Fig 4c (partial-correlation forest): curated + ProteinGym, trajectory t3 only
+    (this repo reproduces one trajectory per stream; see module docstring)."""
+    rows = []
+    for stream, fname in [
+        ("curated", "summary_t3.json"),
+        ("ProteinGym", "proteingym_summary_t3.json"),
+    ]:
+        s = json.load(open(os.path.join(RESULTS, fname)))
+        rows.append(dict(stream=stream, traj=s["traj"], axis="effective d", partial=s["partial_effd"]))
+        rows.append(dict(stream=stream, traj=s["traj"], axis="nominal d", partial=s["partial_nomd"]))
+    out = os.path.join(FIG_DATA, "fig3_partials.csv")
+    pd.DataFrame(rows).to_csv(out, index=False)
+    return out
+
+
+def build_pseudorep():
+    """Fig 4d: ProteinGym pseudoreplication-corrected rho(compress, effective d), recomputed
+    from results/proteingym_t3.csv (Tsuboyama-2023 studies vs. 15 other independent studies)."""
+    d = pd.read_csv(os.path.join(RESULTS, "proteingym_t3.csv"))
+    d["is_tsu"] = d["id"].str.contains("Tsuboyama")
+    d["study"] = d["id"].str.extract(r"_([A-Za-z0-9]+_\d{4})")
+
+    def rho(sub):
+        return stats.spearmanr(sub.r2_law, sub.eff_d).correlation
+
+    g = d.groupby(d["study"].where(~d.is_tsu, "Tsuboyama_2023")).agg(
+        r2_law=("r2_law", "median"), eff_d=("eff_d", "median")
+    )
+    prow = [
+        dict(level="all 69 (pooled)", n=len(d), rho=rho(d)),
+        dict(level="Tsuboyama within-protocol", n=int(d.is_tsu.sum()), rho=rho(d[d.is_tsu])),
+        dict(level="15 other studies", n=int((~d.is_tsu).sum()), rho=rho(d[~d.is_tsu])),
+        dict(level="study-collapsed", n=len(g), rho=stats.spearmanr(g.r2_law, g.eff_d).correlation),
+    ]
+    out = os.path.join(FIG_DATA, "fig3_pseudorep.csv")
+    pd.DataFrame(prow).to_csv(out, index=False)
+    return out
+
+
+def build_effdim_pooled():
+    """Fig 3c (decoupling boxplots): results/effdim_grid_t1.csv, this repo's reconstructed
+    trajectory (see docs/reconciliation-notes.md R-3). Only t1 is available."""
+    e1 = pd.read_csv(os.path.join(RESULTS, "effdim_grid_t1.csv"))
+    e1 = e1.copy()
+    e1["traj"] = "t1"
+    out = os.path.join(FIG_DATA, "fig2_effdim_pooled.csv")
+    e1.to_csv(out, index=False)
+    return e1, out
+
+
+def build_eta2(effdim_pooled):
+    """Fig 3d (eta2 effective vs nominal per family): recomputed from the same t1 grid via
+    cdl.stats.eta2, per-family (paper convention -- see tests/test_decoupling_golden.py)."""
+    rows = []
+    for fam, sub in effdim_pooled.groupby("family"):
+        rows.append(dict(
+            traj="t1", family=fam,
+            eta2_eff=eta2(sub.r2_law, sub.d_eff),
+            eta2_nom=eta2(sub.r2_law, sub.d_nom),
+        ))
+    out = os.path.join(FIG_DATA, "fig2_eta2.csv")
+    pd.DataFrame(rows).to_csv(out, index=False)
+    return out
 
 
 def build_selection():
@@ -99,52 +198,58 @@ def build_selection():
 
 
 def build_enzyme_sensitivity():
-    """Fig 6c (enzyme sensitivity): |Spearman| of each simulator enzyme knob with flux."""
-    sim = pd.read_csv(os.path.join(CLEANED, "vanlent-simulator.csv"))
-    sim = sim.sample(min(5000, len(sim)), random_state=0)
-    enz = [c for c in sim.columns if c != "phenotype"]
-    sens = [
-        dict(enzyme=c, abs_spearman=abs(stats.spearmanr(sim[c], sim["phenotype"]).correlation))
-        for c in enz
-    ]
+    """Fig 6c (enzyme sensitivity): |Spearman| of each simulator enzyme knob with flux, via
+    cdl.simulator.enzyme_sensitivity over the full 279,936-row enumerated table (deterministic;
+    the original prep_data.py subsampled 5000 rows with a fixed seed -- the full table is small
+    enough to use directly here, so no sampling is needed)."""
+    sim_path = os.path.join(CLEANED, "vanlent-simulator.csv")
+    X, flux, _names = load_simulator(sim_path)
+    sens = enzyme_sensitivity(X, flux)
+    sens_df = pd.DataFrame(
+        [dict(enzyme=name, abs_spearman=val) for name, val in sens.items()]
+    ).sort_values("abs_spearman", ascending=False)
     out = os.path.join(FIG_DATA, "fig5_enzyme_sens.csv")
-    pd.DataFrame(sens).sort_values("abs_spearman", ascending=False).to_csv(out, index=False)
+    sens_df.to_csv(out, index=False)
     return out
 
 
-def verify_poelwijk_probe():
-    """Fig 5c (Poelwijk link-transform probe): de-hardcoded -- previously 4 typed
-    dict(transform=..., r2_law=<const>) literals in prep_data.py; now just a read-through
-    check of the recorded audited Poelwijk link-probe outputs (Fig 5C); see
-    docs/reconciliation-notes.md. Not re-derived here: the probe needs the round-03 Poelwijk
-    driver, which was not reconstructed for this repo (same caveat as anchor_table.csv)."""
-    path = os.path.join(FIG_DATA, "fig4_poelwijk_probe.csv")
-    probe = pd.read_csv(path)
+def verify_recorded_artifacts():
+    """The four RECORDED AUDITED ARTIFACTS (see module docstring) must already be committed
+    in figures/data/ -- this script never writes or fabricates them."""
+    missing = [f for f in RECORDED_ARTIFACTS if not os.path.exists(os.path.join(FIG_DATA, f))]
+    if missing:
+        raise FileNotFoundError(
+            "Missing recorded audited artifact(s) in figures/data/: " + ", ".join(missing) +
+            ". These are committed source artifacts (see the provenance block at the top of "
+            "this script) -- restore them from their documented provenance rather than "
+            "fabricating replacement values."
+        )
+    probe = pd.read_csv(os.path.join(FIG_DATA, "fig4_poelwijk_probe.csv"))
     need = {"transform", "r2_law", "r2_bb"}
     assert need <= set(probe.columns) and len(probe) == 4, \
-        f"fig4_poelwijk_probe.csv at {path} is missing/malformed (expected columns {need}, 4 rows)"
-    return path
+        "fig4_poelwijk_probe.csv is missing/malformed (expected columns %s, 4 rows)" % need
+    return RECORDED_ARTIFACTS
 
 
 def main():
     os.makedirs(FIG_DATA, exist_ok=True)
     pop, pop_path = build_population()
+    partials_path = build_partials()
+    pseudorep_path = build_pseudorep()
+    effdim_pooled, effdim_path = build_effdim_pooled()
+    eta2_path = build_eta2(effdim_pooled)
     sel_path = build_selection()
     sens_path = build_enzyme_sensitivity()
-    probe_path = verify_poelwijk_probe()
+    recorded = verify_recorded_artifacts()
 
-    print("WROTE:")
-    for p in (pop_path, sel_path, sens_path):
+    print("WROTE (recomputed from results/ each run):")
+    for p in (pop_path, partials_path, pseudorep_path, effdim_path, eta2_path, sel_path, sens_path):
         print(" ", os.path.relpath(p, ROOT))
-    print("VERIFIED (pass-through, not regenerated):", os.path.relpath(probe_path, ROOT))
+    print("\nPRESENT (recorded audited artifacts, not written by this script):")
+    for f in recorded:
+        print(" ", os.path.join("figures", "data", f))
 
     print("\nfig3_population (n):", len(pop), "| domains:", pop["domain"].value_counts().to_dict())
-    print(
-        "\nPre-computed under figures/data/ (need multi-trajectory runs or an "
-        "unreconstructed round -- see module docstring):\n"
-        "  fig3_partials.csv, fig3_pseudorep.csv, fig2_effdim_pooled.csv, fig2_eta2.csv,\n"
-        "  betacarotene_oof.csv, anchor_table.csv"
-    )
 
 
 if __name__ == "__main__":
