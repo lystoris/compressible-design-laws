@@ -1,0 +1,5 @@
+mutant,phenotype
+D40A,1.0
+D40G,2.0
+D40A:G41S,3.0
+G41S,1.5
