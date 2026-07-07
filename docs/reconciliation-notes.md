@@ -30,7 +30,9 @@ in `paper/Patterns/Xu_etal_Patterns_Manuscript.docx`.
 
 ## R-3. R5 decoupling generator reconstructed (original code not persisted)
 
-**Status:** reconstructed + verified in paper's η² range (Task 9). User-approved "debug-to-match".
+**Status:** reconstructed (Task 9), user-approved "debug-to-match". The confound-controlled partial
+correlation matches the paper exactly (−0.843 vs −0.84); η²_eff (0.647) lands just below the paper's
+reported [0.66, 0.81] range — see the honest caveat below.
 
 - Round-05 (the decoupling / central result) has **no persisted `.py`** — only per-trajectory result
   grids (`effdim_grid.csv`), `answer.json`, and run logs. The exact decoupled generator (functional

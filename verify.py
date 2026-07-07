@@ -6,6 +6,11 @@ Runs a checklist of the paper's headline claims against the reproduced canon in
 golden `tests/fixtures/golden/effdim_grid_t1.csv`). Prints a PASS/FAIL table and
 exits non-zero if any check fails.
 
+Note: `verify.py` reads the committed canonical `results/`, so `make verify` on its own
+validates the frozen canon. It becomes an end-to-end reproduction check only after
+`make reproduce` regenerates `results/` from source (and the slow golden tests in tests/
+are where the engines are actually re-run and compared to the audited outputs).
+
 Targets are grounded in docs/reconciliation-notes.md (R-1..R-4): they reflect what
 this code release ACTUALLY reproduces, not the paper's original plan placeholders.
 Notably:
